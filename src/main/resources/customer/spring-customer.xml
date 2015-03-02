@@ -1,0 +1,132 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                     http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+                     http://www.springframework.org/schema/aop 
+                     http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+                     http://www.springframework.org/schema/aop 
+				     http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+				     http://www.springframework.org/schema/context
+					 http://www.springframework.org/schema/context/spring-context-3.0.xsd
+				     http://www.springframework.org/schema/data/jpa 
+				     http://www.springframework.org/schema/data/jpa/spring-jpa-1.0.xsd
+				     http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+				     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<aop:aspectj-autoproxy />
+
+	<task:annotation-driven />
+
+	<bean id="velocityEngine"
+		class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
+		<property name="velocityProperties">
+			<value>
+				resource.loader=class
+				class.resource.loader.class=org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
+			</value>
+		</property>
+	</bean>
+
+	<!-- Scheduling -->
+	<bean id="demoServiceBasicUsageFixedDelay" class="com.epam.scheduling.SendMailRestController"></bean>
+
+	<!-- EMAIL SENDER -->
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587"></property>
+		<property name="username" value="badion926@gmail.com"></property>
+		<property name="password" value="ghbdtnrfrltkf"></property>
+
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- this is a template message that we can pre-load with default state -->
+	<bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
+		<property name="from" value="exampleofemail@test.com" />
+		<property name="subject" value="List of customers" />
+	</bean>
+
+	<bean id="numberOfCustomers" class="com.epam.scheduling.SendingEmailWithCustomers">
+		<property name="mailSender" ref="mailSender" />
+		<property name="velocityEngine" ref="velocityEngine" />
+	</bean>
+
+	<context:component-scan base-package="com.epam.jersey" />
+	<context:component-scan base-package="com.epam.scheduling" />
+	<!-- EXCEPTIONS -->
+	<!-- ______________________________________________________________________________ -->
+	<!-- ______________________________________________________________________________ -->
+
+	<bean
+		class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="com.epam.exceptions.NotFoundInDatabaseException">
+					ExceptionPage
+				</prop>
+				<prop key="com.epam.exceptions.EmployeeInDataBaseIsEmpty">
+					ExceptionPage
+				</prop>
+				<prop key="com.epam.exceptions.DuplicateEmployeeException">
+					ExceptionPage
+				</prop>
+			</props>
+		</property>
+		<property name="defaultErrorView" value="error" />
+	</bean>
+
+	<!-- ______________________________________________________________________________ -->
+	<!-- ______________________________________________________________________________ -->
+
+	<bean id="employeeRestClient" class="com.epam.controller.EmployeeRestClient"></bean>
+
+	<bean id="facebook"
+		class="org.springframework.social.facebook.api.impl.FacebookTemplate"></bean>
+
+	<bean id="customerDAO" class="com.epam.dao.impl.JdbcCustomerDao">
+		<property name="dataSource" ref="dataSource" />
+		<property name="transactionTemplate">
+			<bean class="org.springframework.transaction.support.TransactionTemplate">
+				<property name="transactionManager" ref="transactionManager"></property>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- Employee Validation for Employee -->
+	<!-- ______________________________________________________________________________ -->
+	<!-- ______________________________________________________________________________ -->
+
+	<bean id="employeeValidator" class="com.epam.validator.EmployeeValidator"></bean>
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basename" value="classpath:message" />
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+
+	<!-- ______________________________________________________________________________ -->
+	<!-- ______________________________________________________________________________ -->
+
+	<bean id="employeeDao" class="com.epam.dao.impl.EmployeeDaoImpl">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean
+		class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor" />
+
+	<bean id="logAspect" class="com.epam.aspect.LoggingAspect" />
+</beans>
