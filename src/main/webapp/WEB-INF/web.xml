@@ -17,8 +17,10 @@
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
 		<param-value>/WEB-INF/mvc-dispatcher-servlet.xml,
-		classpath:customer/spring-customer.xml,
+		classpath:customer/spring-context.xml,
     	classpath:database/splitterDS.xml,
+    	classpath:META-INF/integration/spring-integration-context.xml,
+    	classpath:META-INF/integration/http-outbound-config.xml,
     	/WEB-INF/spring-security.xml
      </param-value>
 	</context-param>

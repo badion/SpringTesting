@@ -17,11 +17,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 
 import com.epam.dao.CustomerDao;
 import com.epam.exceptions.NotFoundInDatabaseException;
+import com.epam.integration.gateways.CountSumOfCustomers;
 import com.epam.model.Customer;
 
 @Component
@@ -86,5 +89,4 @@ public class CustomerJerseyRest {
 				.entity("add cust is called " + name + " age " + age
 						+ " email " + email + " password " + password).build();
 	}
-
 }

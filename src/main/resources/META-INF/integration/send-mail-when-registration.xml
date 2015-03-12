@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-file="http://www.springframework.org/schema/integration/file"
+	xmlns:int-mail="http://www.springframework.org/schema/integration/mail"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+	http://www.springframework.org/schema/integration/mail http://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
+	http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+	http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+	http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd">
+
+	<bean id="mailTransformerBean" class="com.epam.integration.transformers.MailTransformer">
+		<property name="mailTo" value="vitalii_badion@epam.com" />
+		<property name="mailFrom" value="badion926@gmail.com" />
+		<property name="mailSubject" value="Spring Integration - Send Mail" />
+	</bean>
+
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587" />
+		<property name="username" value="badion926@gmail.com" />
+		<property name="password" value="ghbdtnrfrltkf" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">
+					true
+				</prop>
+				<prop key="mail.smtp.starttls.enable">
+					true
+				</prop>
+			</props>
+		</property>
+	</bean>
+
+	<int:channel id="filesIn" />
+	<int:channel id="mailMsgTransformer" />
+	<int:channel id="outboundMail" />
+
+	<int-file:inbound-channel-adapter
+		channel="filesIn" directory="D:\amountOfCustomers\newRegisteredUser"
+		prevent-duplicates="true" filename-pattern="*.txt">
+		<int:poller fixed-rate="5000" />
+	</int-file:inbound-channel-adapter>
+
+	<int-file:file-to-string-transformer
+		input-channel="filesIn" output-channel="mailMsgTransformer"
+		delete-files="true" charset="UTF-8" />
+
+
+	<int:transformer ref="mailTransformerBean"
+		input-channel="mailMsgTransformer" method="transform" output-channel="outboundMail" />
+
+	<int-mail:outbound-channel-adapter
+		channel="outboundMail" mail-sender="mailSender" />
+</beans>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	xmlns:int-file="http://www.springframework.org/schema/integration/file"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/http 
+		http://www.springframework.org/schema/integration/http/spring-integration-http.xsd 
+		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+		http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd">
+
+	<int:gateway id="requestGateway"
+		service-interface="com.epam.integration.gateways.CustomersObject"
+		default-request-channel="requestChannel" />
+
+	<int:channel id="requestChannel" />
+	<int:channel id="requestChannel1" />
+	<int:channel id="requestChannel2" />
+	<int:channel id="requestChannel3"></int:channel>
+
+	<int:recipient-list-router input-channel="requestChannel">
+		<int:recipient channel="requestChannel1" />
+		<int:recipient channel="requestChannel2" />
+		<int:recipient channel="requestChannel3" />
+	</int:recipient-list-router>
+
+	<int:object-to-string-transformer
+		input-channel="requestChannel1" output-channel="objectChannel"></int:object-to-string-transformer>
+
+	<int:channel id="objectChannel"></int:channel>
+
+	<int-file:outbound-channel-adapter
+		filename-generator-expression="'customersObject' + '.properties'"
+		channel="objectChannel" charset="UTF-8" directory="file:d://amountOfCustomers/objects"
+		auto-create-directory="true"></int-file:outbound-channel-adapter>
+
+	<int:channel id="jsonChannel"></int:channel>
+
+	<int:object-to-json-transformer
+		input-channel="requestChannel2" output-channel="jsonChannel"></int:object-to-json-transformer>
+
+	<int-file:outbound-channel-adapter
+		filename-generator-expression="'customersJSON' + '.json'" channel="jsonChannel"
+		charset="UTF-8" directory="file:d://amountOfCustomers/json"
+		auto-create-directory="true" />
+
+	<bean id="jaxbMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+		<property name="contextPath" value="com.epam.model" />
+	</bean>
+
+	<int:channel id="xml-outbound-channel"></int:channel>
+
+	<int-xml:marshalling-transformer
+		input-channel="requestChannel3" marshaller="jaxbMarshaller"
+		output-channel="xml-outbound-channel"></int-xml:marshalling-transformer>
+
+		<int-stream:stdout-channel-adapter
+		channel="xml-outbound-channel" append-newline="true" />
+	
+
+	<int-file:outbound-channel-adapter
+		filename-generator-expression="'customersXML' + '.xml'" channel="xml-outbound-channel"
+		charset="UTF-8" directory="file:d://amountOfCustomers/xml"
+		auto-create-directory="true" />
+
+	<int-stream:stdout-channel-adapter
+		channel="requestChannel" append-newline="true" />
+
+</beans>

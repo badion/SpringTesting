@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-file="http://www.springframework.org/schema/integration/file"
+	xmlns:int-mail="http://www.springframework.org/schema/integration/mail"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+	http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+	http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+	http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd">
+
+
+	<int:gateway id="customerById" service-interface="com.epam.integration.gateways.CustomerById"
+		default-request-channel="customerByIdChannel">
+	</int:gateway>
+
+	<int:channel id="customerByIdChannel"></int:channel>
+
+	<int:object-to-json-transformer
+		input-channel="customerByIdChannel" output-channel="outboundChannel"></int:object-to-json-transformer>
+
+	<int:channel id="outboundChannel"></int:channel>
+
+	<int:recipient-list-router input-channel="outboundChannel">
+		<int:recipient channel="mod-file-channel" />
+		<int:recipient channel="default-file-channel" />
+	</int:recipient-list-router>
+
+	<int:channel id="mod-file-channel"></int:channel>
+	<int:channel id="default-file-channel"></int:channel>
+
+	<int-file:outbound-channel-adapter
+		filename-generator-expression="'customerById' + '.property'" channel="default-file-channel"
+		charset="UTF-8" directory="file:d://amountOfCustomers/jsonById"
+		auto-create-directory="true" />
+
+	<int:json-to-object-transformer
+		input-channel="mod-file-channel" output-channel="object-channel"></int:json-to-object-transformer>
+
+	<int:channel id="object-channel"></int:channel>
+
+	<int:enricher input-channel="object-channel"
+		output-channel="enrich-channel" request-channel="date-channel">
+		<int:property name="avaliable" expression="true" />
+		<int:property name="date" expression="payload" />
+	</int:enricher>
+
+	<int:service-activator id="enriching-service-activator"
+		ref="customer-save-time" input-channel="date-channel" />
+		
+	<int:service-activator input-channel="date-channel" ref="print"></int:service-activator>
+
+	<int:channel id="date-channel"></int:channel>
+	<int:channel id="enrich-channel"></int:channel>
+
+	<int:object-to-json-transformer
+		input-channel="enrich-channel" output-channel="modified-json-channel"></int:object-to-json-transformer>
+
+	<int:channel id="modified-json-channel"></int:channel>
+
+	<int-file:outbound-channel-adapter
+		channel="modified-json-channel" filename-generator-expression="'customerById2' + '.property'"
+		charset="UTF-8" directory="file:d://amountOfCustomers/jsonById"
+		auto-create-directory="true" />
+
+	<bean id="print" class="com.epam.integration.serviceActivators.ExampleServiceActivator" />
+	<bean id="customer-save-time" class="com.epam.integration.gateways.CustomerSaveDate"></bean>
+</beans>

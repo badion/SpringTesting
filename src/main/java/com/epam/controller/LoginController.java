@@ -10,6 +10,8 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.epam.dao.CustomerDao;
 import com.epam.model.Customer;
 
 @Controller
@@ -33,6 +36,9 @@ public class LoginController {
 	private final static String SECRET_ID = "ae050fe6cfa4a0c6e168eea787834ea5";
 
 	private Facebook facebook;
+
+	@Autowired
+	private CustomerDao customerDao;
 
 	@Inject
 	public LoginController(Facebook facebook) {
@@ -59,17 +65,7 @@ public class LoginController {
 					.getUserProfile().getName());
 			System.out.println("   is authorized facebook ? "
 					+ facebook.isAuthorized());
-			System.out.println(" is authenticated user ? "
-					+ SecurityContextHolder.getContext().getAuthentication()
-							.getName());
-			Authentication authentication = new UsernamePasswordAuthenticationToken(
-					facebook, facebook.userOperations().getUserProfile()
-							.getEmail());
-			SecurityContextHolder.getContext()
-					.setAuthentication(authentication);
-			System.out.println(" is authenticated user ? "
-					+ SecurityContextHolder.getContext().getAuthentication()
-							.getName());
+
 		}
 		return model;
 
@@ -119,6 +115,14 @@ public class LoginController {
 		}
 	}
 
+	/**
+	 * @param response
+	 * @param request
+	 * @param model
+	 * @param code
+	 * @return
+	 * @throws MalformedURLException
+	 */
 	@RequestMapping(value = "/facebook/handleAuth.do")
 	public String handleAuthResponse(HttpServletResponse response,
 			HttpServletRequest request, Model model,
@@ -150,8 +154,26 @@ public class LoginController {
 				System.out.println("Token ----  " + accessToken
 						+ " Expires ----- " + expires);
 				facebook = new FacebookTemplate(accessToken);
+				System.out.println(facebook.userOperations().getUserProfile()
+						.getId());
 				model.addAttribute("accessToken", accessToken);
-				// facebookService.getFriendList(accessToken);
+
+				try {
+					if (isUserInDatabase(facebook.userOperations()
+							.getUserProfile().getId())) {
+						Customer oldCustomer = customerDao
+								.getCustomerByFacebookId(facebook
+										.userOperations().getUserProfile()
+										.getId());
+						addInSession(oldCustomer);
+					}
+				} catch (EmptyResultDataAccessException e) {
+					Customer newCustomer = createNewUserFromFacebookUser(facebook
+							.userOperations().getUserProfile().getId());
+					customerDao.insert(newCustomer);
+					addInSession(newCustomer);
+				}
+
 			} else {
 				throw new RuntimeException("Access token and expires not found");
 			}
@@ -166,17 +188,33 @@ public class LoginController {
 		model.addAttribute("pict", facebook.userOperations().getUserProfile()
 				.getId());
 
+		return "facebookHello";
+
+	}
+
+	private void addInSession(Customer customer) {
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+				customer.getEmail(), customer.getName());
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+	}
+
+	private boolean isUserInDatabase(String facebookId) {
+		if (customerDao.getCustomerByFacebookId(facebookId) != null) {
+			System.out.println("customer true");
+			return true;
+		} else {
+			System.out.println("customer false");
+			return false;
+		}
+	}
+
+	private Customer createNewUserFromFacebookUser(String facebookId) {
 		Customer customer = new Customer();
 		customer.setName(facebook.userOperations().getUserProfile().getName());
 		customer.setAge(22);
 		customer.setEmail(facebook.userOperations().getUserProfile().getEmail());
-		System.out.println(facebook.userOperations().getUserProfile().getId());
-		System.out
-				.println(facebook.userOperations().getUserProfile().getName());
-
-		System.out.println(facebook.isAuthorized());
-		return "facebookHello";
-
+		customer.setFacebookId(facebookId);
+		return customer;
 	}
 
 	public static String getAuthURL(String authCode, HttpServletRequest request) {

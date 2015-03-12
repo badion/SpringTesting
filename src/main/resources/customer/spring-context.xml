@@ -12,15 +12,16 @@
 				     http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
 				     http://www.springframework.org/schema/context
 					 http://www.springframework.org/schema/context/spring-context-3.0.xsd
-				     http://www.springframework.org/schema/data/jpa 
+				     http://www.springframework.org/schema/data/jpa
 				     http://www.springframework.org/schema/data/jpa/spring-jpa-1.0.xsd
 				     http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
 				     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
 	<aop:aspectj-autoproxy />
-
 	<task:annotation-driven />
-
+	<context:component-scan base-package="com.epam.jersey" />
+	<context:component-scan base-package="com.epam.scheduling" />
+	
 	<bean id="velocityEngine"
 		class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
 		<property name="velocityProperties">
@@ -60,8 +61,7 @@
 		<property name="velocityEngine" ref="velocityEngine" />
 	</bean>
 
-	<context:component-scan base-package="com.epam.jersey" />
-	<context:component-scan base-package="com.epam.scheduling" />
+	
 	<!-- EXCEPTIONS -->
 	<!-- ______________________________________________________________________________ -->
 	<!-- ______________________________________________________________________________ -->
@@ -128,5 +128,6 @@
 	<bean
 		class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor" />
 
-	<bean id="logAspect" class="com.epam.aspect.LoggingAspect" />
+	<bean id="logAspect" class="com.epam.aspect.InjectionAspect" />
+	
 </beans>

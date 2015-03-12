@@ -1339,7 +1339,7 @@ p, ol, ul {
 											<h1>Dear user</h1>
 											<p>We wan't to know you that we have $customers.size()</p>
 											<p>List of customers</p>
-											<p>#foreach( $pet in $customers) $pet.name #end</p>
+											<p>#foreach( $cust in $customers) $cust.email #end</p>
 											<p>Best regards</p>
 										</td>
 									</tr>

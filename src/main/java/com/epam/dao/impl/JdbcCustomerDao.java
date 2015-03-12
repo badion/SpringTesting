@@ -9,7 +9,9 @@ import java.util.Map;
 import javax.jws.WebService;
 import javax.sql.DataSource;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -20,6 +22,8 @@ import com.epam.model.Customer;
 import com.epam.model.Employee;
 
 public class JdbcCustomerDao implements CustomerDao {
+
+	private static final String ACCESS_TOKEN = "access_token";
 
 	private static final String PASSWORD = "password";
 
@@ -33,9 +37,11 @@ public class JdbcCustomerDao implements CustomerDao {
 
 	private static final String SELECT_FROM_CUSTOMER_WHERE_CUST_ID = "SELECT * FROM CUSTOMER WHERE CUST_ID = ?";
 
-	private static final String INSERT_INTO_CUSTOMER_CUST_ID_NAME_AGE_VALUES = "INSERT INTO CUSTOMER (NAME, AGE, EMAIL, PASSWORD) VALUES (?, ?, ?, ?)";
+	private static final String INSERT_INTO_CUSTOMER_CUST_ID_NAME_AGE_VALUES = "INSERT INTO CUSTOMER (NAME, AGE, EMAIL, PASSWORD, access_token) VALUES (?, ?, ?, ?, ?)";
 
 	private static final String SELECT_ALL_FROM_CUSTOMER = "SELECT * FROM CUSTOMER";
+
+	private static final String SELECT_CUSTOMER_BY_ACCESS_TOKEN = "SELECT * FROM CUSTOMER WHERE access_token = ?";
 
 	private DataSource dataSource;
 
@@ -57,7 +63,8 @@ public class JdbcCustomerDao implements CustomerDao {
 					jdbcTemplate.update(
 							INSERT_INTO_CUSTOMER_CUST_ID_NAME_AGE_VALUES,
 							customer.getName(), customer.getAge(),
-							customer.getEmail(), customer.getPassword());
+							customer.getEmail(), customer.getPassword(),
+							customer.getFacebookId());
 				} catch (RuntimeException e) {
 					txStatus.setRollbackOnly();
 					throw e;
@@ -75,7 +82,8 @@ public class JdbcCustomerDao implements CustomerDao {
 							throws SQLException {
 						Customer customer = new Customer(rs.getInt(CUST_ID), rs
 								.getString(NAME), rs.getInt(AGE), rs
-								.getString(EMAIL), rs.getString(PASSWORD));
+								.getString(EMAIL), rs.getString(PASSWORD), rs
+								.getString(ACCESS_TOKEN));
 						return customer;
 					}
 				}, custId);
@@ -88,7 +96,8 @@ public class JdbcCustomerDao implements CustomerDao {
 				.queryForList(SELECT_ALL_FROM_CUSTOMER)) {
 			Customer customer = new Customer((Integer) map.get(CUST_ID),
 					(String) map.get(NAME), (Integer) map.get(AGE),
-					(String) map.get(EMAIL), (String) map.get(PASSWORD));
+					(String) map.get(EMAIL), (String) map.get(PASSWORD),
+					(String) map.get(ACCESS_TOKEN));
 			customers.add(customer);
 		}
 		return customers;
@@ -111,11 +120,28 @@ public class JdbcCustomerDao implements CustomerDao {
 							throws SQLException {
 						Customer customer = new Customer(rs.getInt("CUST_ID"),
 								rs.getString(NAME), rs.getInt(AGE), rs
-										.getString("email"), rs
-										.getString("password"));
+										.getString(EMAIL), rs
+										.getString(PASSWORD), rs
+										.getString(ACCESS_TOKEN));
 						return customer;
 					}
 				}, id);
 	}
+
+	@Override
+	public Customer getCustomerByFacebookId(String facebookId) {
+		return jdbcTemplate.queryForObject(SELECT_CUSTOMER_BY_ACCESS_TOKEN,
+				new ParameterizedRowMapper<Customer>() {
+					public Customer mapRow(ResultSet rs, int rowNum)
+							throws SQLException {
+						Customer customer = new Customer(rs.getInt(CUST_ID), rs
+								.getString(NAME), rs.getInt(AGE), rs
+								.getString(EMAIL), rs.getString(PASSWORD), rs
+								.getString(ACCESS_TOKEN));
+						return customer;
+					}
+				}, facebookId);
+	}
+
 
 }

@@ -66,27 +66,11 @@ public class CustomerJerseyTest extends JerseyTest {
 	    setBaseUrl("http://localhost:8080/SpringInActionPart6/");
 	}
 
-	 @Test
-	    public void testSearch() throws Exception {
-	        final WebClient webClient = new WebClient();
-	        final URL url = new URL("http://www.google.com");
-	        final HtmlPage page = (HtmlPage)webClient.getPage(url);
-	        HtmlForm form = (HtmlForm) page.getForms().get(0);
-	        HtmlTextInput text = (HtmlTextInput) form.getInputByName("q");
-	        text.setValueAttribute("HtmlUnit");
-	        HtmlSubmitInput btn = (HtmlSubmitInput) form.getInputByName("btnG");
-	        HtmlPage page2 = (HtmlPage) btn.click();
-	        HtmlAnchor link = page2.getAnchorByHref("http://htmlunit.sourceforge.net/");
-	        HtmlPage page3 = (HtmlPage) link.click();
-	        Assert.assertEquals(page3.getTitleText(), "htmlunit - Welcome to HtmlUnit");
-	        Assert.assertNotNull(page3.getAnchorByHref("gettingStarted.html"));
-	     }
-	
 	@Test
 	public void testFindAll() {
 		List<Customer> all = new ArrayList<Customer>();
-		all.add(new Customer(1, "vitalii", 12, "badion@bigmir.net", "password"));
-		all.add(new Customer(2, "alex", 12, "badion@bigmir.net", "password"));
+		all.add(new Customer(1, "vitalii", 12, "badion@bigmir.net", "password", ""));
+		all.add(new Customer(2, "alex", 12, "badion@bigmir.net", "password", ""));
 		when(customerDao.getAll()).thenReturn(all);
 		List<Customer> result1 = customerDao.getAll();
 		List<Customer> result2 = customerDaoReal.getAll();

@@ -50,12 +50,12 @@ public class SendMailRestController {
 		return Response.status(200).entity("Email successfully sent").build();
 	}
 
-	@Scheduled(fixedDelay = 50000)
-	public void demoMethod() {
-		System.out
-				.println("Method executed at every 5 seconds. Current time is :: "
-						+ new Date());
-	}
+//	@Scheduled(fixedDelay = 50000)
+//	public void demoMethod() {
+//		System.out
+//				.println("Method executed at every 5 seconds. Current time is :: "
+//						+ new Date());
+//	}
 
 	/**
 	 * @return the customers

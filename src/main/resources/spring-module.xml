@@ -4,5 +4,7 @@
 	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
 	<import resource="database/splitterDS.xml" />
-	<import resource="customer/spring-customer.xml" />
+	<import resource="customer/spring-context.xml" />
+	<import resource="META-INF/integration/spring-integration-context.xml"/>
+	<import resource="META-INF/integration/http-outbound-config.xml"/>
 </beans>

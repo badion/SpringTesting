@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	xmlns:int-file="http://www.springframework.org/schema/integration/file"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/http 
+		http://www.springframework.org/schema/integration/http/spring-integration-http.xsd 
+		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd">
+
+	<int:poller id="defaultPoller" fixed-rate="200" />
+
+	<int:gateway id="countSum"
+		service-interface="com.epam.integration.gateways.CountSumOfCustomers"
+		default-request-channel="simpleExpression">
+	</int:gateway>
+
+	<int:channel id="simpleExpression"></int:channel>
+
+	<int:transformer input-channel="simpleExpression"
+		output-channel="convertedToString"
+		expression="'Amount customers:' + ' ' + new String(payload.toString())"></int:transformer>
+
+	<int:channel id="convertedToString" />
+	<int:channel id="saveToFile"></int:channel>
+	<int:channel id="printToScreen"></int:channel>
+
+	<int:recipient-list-router input-channel="convertedToString">
+		<int:recipient channel="saveToFile" />
+		<int:recipient channel="printToScreen" />
+	</int:recipient-list-router>
+
+	<int-file:outbound-channel-adapter
+		filename-generator-expression="'customers' + '.txt'" channel="saveToFile"
+		charset="UTF-8" directory="file:d://amountOfCustomers"
+		auto-create-directory="true"></int-file:outbound-channel-adapter>
+
+	<int-stream:stdout-channel-adapter
+		id="print" channel="printToScreen" append-newline="true" />
+
+	<int:service-activator id="expressionConverter"
+		input-channel="simpleExpression" expression="payload" />
+
+	<int:channel id="testChannel">
+		<int:queue />
+	</int:channel>
+
+</beans>

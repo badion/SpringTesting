@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-file="http://www.springframework.org/schema/integration/file"
+	xmlns:int-mail="http://www.springframework.org/schema/integration/mail"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+	http://www.springframework.org/schema/integration/mail http://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
+	http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+	http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+	http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd">
+
+	<int:gateway id="recieveParams" service-interface="com.epam.integration.gateways.MailGateway"
+		default-request-channel="inboundChannel">
+	</int:gateway>
+
+	<int:channel id="inboundChannel" />
+
+	<int:transformer input-channel="inboundChannel"
+		output-channel="outputToString"
+		expression="'Information' + ' ' + new String(payload[0].toString() + ', ' + payload[1].toString() + ', ' + payload[2].toString() + ', ' + payload[3].toString())"></int:transformer>
+
+	<int:channel id="outputToString"></int:channel>
+
+	<int-file:outbound-channel-adapter
+		filename-generator-expression="'registered_users_for_mail_send' + '.txt'"
+		channel="outputToString" charset="UTF-8"
+		directory="file:d://amountOfCustomers/newRegisteredUser"
+		auto-create-directory="true"></int-file:outbound-channel-adapter>
+
+</beans>
